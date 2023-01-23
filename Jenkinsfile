@@ -3,11 +3,10 @@ pipeline {
   stages {
     stage('install playwright') {
       steps {
-        
-            #!/bin/bash
+        bash '''
           npm i -D @playwright/test
           npx playwright install
-        
+        '''
       }
     }
     stage('help') {
@@ -18,7 +17,6 @@ pipeline {
     stage('test') {
       steps {
         bash '''
-            #!/bin/bash
           npx playwright test --list
           npx playwright test
         '''
