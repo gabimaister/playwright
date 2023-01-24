@@ -1,7 +1,7 @@
 pipeline {
   agent any
-  environment {
-        npm_config_cache = 'npm-cache'
+ environment {
+        HOME = "${env.WORKSPACE}"
     }
   stages {
     stage('e2e-tests') {
