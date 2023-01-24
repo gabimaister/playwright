@@ -1,18 +1,11 @@
 pipeline {
   agent any
   stages {
-    stage('test') {
-      steps {
-        sh '''
-          npx playwright test --list
-          npx playwright test
-        '''
-      }
-      post {
-        success {
-          archiveArtifacts(artifacts: 'homepage-*.png', followSymlinks: false)
-          sh 'rm -rf *.png'
-        }
+    stage('e2e-tests') {
+         steps {
+            sh 'npm install'
+            sh 'npm run test'
+         }
       }
     }
   }
