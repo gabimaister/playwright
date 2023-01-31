@@ -1,107 +1,100 @@
-import type { PlaywrightTestConfig } from '@playwright/test';
-import { devices } from '@playwright/test';
+/* eslint-disable no-undef */
+// playwright.config.js
+// @ts-check
 
-/**
- * Read environment variables from file.
- * https://github.com/motdotla/dotenv
- */
-// require('dotenv').config();
+// eslint-disable-next-line no-unused-vars
+const { devices } = require('@playwright/test');
+const MAX_FAILURES = process.env.CI ? 2 : 0;
+const NUM_WORKERS = process.env.CI ? 1 : undefined;
+const RETRY = 5;
 
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
-const config: PlaywrightTestConfig = {
-  testDir: './tests',
-  /* Maximum time one test can run for. */
-  timeout: 30 * 1000,
-  expect: {
-    /**
-     * Maximum time expect() should wait for the condition to be met.
-     * For example in `await expect(locator).toHaveText();`
-     */
-    timeout: 5000
-  },
-  /* Run tests in files in parallel */
+/** @type {import('@playwright/test').PlaywrightTestConfig} */
+const config = {
+    retries: RETRY, //Retries 2 times for a total of 3 runs. When running sharded and with maxFailures = 5, this should ensure that flake is managed without failing the full suite
+    testDir: './tests/unit-tests',
+    testIgnore: '**/*.perf.spec.js', //Ignore performance tests and define in playwright-perfromance.config.js
+    timeout: 60 * 1000,
+    reporter: 'html',
+    expect: {
+      /**
+       * Maximum time expect() should wait for the condition to be met.
+       * For example in `await expect(locator).toHaveText();`
+       */
+      timeout: 5000
+    },
+      /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Maximum time each action such as `click()` can take. Defaults to 0 (no limit). */
-    actionTimeout: 0,
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    // baseURL: 'http://localhost:3000',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
-  },
-
-  /* Configure projects for major browsers */
-  projects: [
-    {
-      name: 'chromium',
-      use: {
-        ...devices['Desktop Chrome'],
-      },
+    maxFailures: MAX_FAILURES, //Limits failures to 5 to reduce CI Waste
+    workers: NUM_WORKERS, //Limit to 2 for CircleCI Agent
+    use: {
+        baseURL: 'http://localhost:8080/',
+        headless: true,
+        ignoreHTTPSErrors: true,
+        screenshot: 'only-on-failure',
+        trace: 'on-first-retry',
+        video: 'on'
     },
-
-    {
-      name: 'firefox',
-      use: {
-        ...devices['Desktop Firefox'],
+    projects: [
+      {
+        name: 'chromium',
+        use: {
+          ...devices['Desktop Chrome'],
+        },
       },
-    },
-
-    {
-      name: 'webkit',
-      use: {
-        ...devices['Desktop Safari'],
+  
+      {
+        name: 'firefox',
+        use: {
+          ...devices['Desktop Firefox'],
+        },
       },
-    },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: {
-    //     ...devices['Pixel 5'],
-    //   },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: {
-    //     ...devices['iPhone 12'],
-    //   },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: {
-    //     channel: 'msedge',
-    //   },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: {
-    //     channel: 'chrome',
-    //   },
-    // },
-  ],
-
-  /* Folder for test artifacts such as screenshots, videos, traces, etc. */
-  // outputDir: 'test-results/',
-
-  /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'npm run start',
-  //   port: 3000,
-  // },
+  
+      {
+        name: 'webkit',
+        use: {
+          ...devices['Desktop Safari'],
+        },
+      },
+  
+      /* Test against mobile viewports. */
+      // {
+      //   name: 'Mobile Chrome',
+      //   use: {
+      //     ...devices['Pixel 5'],
+      //   },
+      // },
+      // {
+      //   name: 'Mobile Safari',
+      //   use: {
+      //     ...devices['iPhone 12'],
+      //   },
+      // },
+  
+      /* Test against branded browsers. */
+      // {
+      //   name: 'Microsoft Edge',
+      //   use: {
+      //     channel: 'msedge',
+      //   },
+      // },
+      // {
+      //   name: 'Google Chrome',
+      //   use: {
+      //     channel: 'chrome',
+      //   },
+      // },
+    ],
+    reporter: [
+        ['list'],
+        ['html', {
+            open: 'never',
+            outputFolder: '../html-test-results' //Must be in different location due to https://github.com/microsoft/playwright/issues/12840
+        }],
+        ['junit', { outputFile: 'test-results/results.xml' }],
+        ['github']
+    ]
 };
 
-export default config;
+module.exports = config;
